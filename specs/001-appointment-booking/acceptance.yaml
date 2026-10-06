@@ -51,11 +51,11 @@ scenarios:
         expect: { status: 201 }
       - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1400 } }
         expect: { status: 201 }
-     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1600 } }
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1600 } }
        expect: { status: 201 }
-     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-0930 } }
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-0930 } }
        expect: { status: 201 }
-     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-1100 } }
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-1100 } }
        expect: { status: 409, body: { code: BOOKING_LIMIT_REACHED } }
 
   - id: AC-006
