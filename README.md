@@ -257,7 +257,7 @@ As more of our code is generated, the spec becomes the most valuable thing we wr
 
 The full working solution - specs, contract, FastAPI implementation, the four gates, the drift demo, CI and all the diagrams in Mermaid - is on GitHub:
 
-👉 **https://github.com/rajarajanb/Spec-Driven-Appointment-Booking**
+👉 **https://github.com/rajarajanb/Spec-Driven-Healthcare-Appointment-Booking**
 
 Clone it, run `python tools/drift_demo.py`, then try this: add a rescheduling feature. Start with `specs/002-rescheduling/spec.md` - not with the code - and see how it changes the conversation.
 
