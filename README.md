@@ -1,6 +1,7 @@
 # Spec Driven Appointment Booking - A Working Guide to Spec-Driven Development
 Healthcare booking API where the specification-not the code-is the source of truth, enforced by four lightweight gates that keep humans and AI agents honest.
 
+[![spec-gates](https://github.com/rajarajanb/Spec-Driven-Healthcare-Appointment-Booking/actions/workflows/spec-gates.yml/badge.svg)](https://github.com/rajarajanb/Spec-Driven-Healthcare-Appointment-Booking/actions/workflows/spec-gates.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 > **TL;DR** — Write the spec first (`spec.md` + `openapi.yaml` + `acceptance.yaml`), let a human or an AI agent write the code, and let four automated gates decide whether the code matches the spec. Run it yourself:
