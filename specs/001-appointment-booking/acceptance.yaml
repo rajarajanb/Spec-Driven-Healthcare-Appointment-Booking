@@ -43,7 +43,7 @@ scenarios:
         expect: { status: 404, body: { code: SLOT_NOT_FOUND } }
 
   - id: AC-005
-    title: A patient cannot hold more than 5 active upcoming appointments
+    title: A patient cannot hold more than 3 active upcoming appointments
     steps:
       - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-0930 } }
         expect: { status: 201 }
@@ -52,11 +52,7 @@ scenarios:
       - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1400 } }
         expect: { status: 201 }
       - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1600 } }
-       expect: { status: 201 }
-      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-0930 } }
-       expect: { status: 201 }
-      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-1100 } }
-       expect: { status: 409, body: { code: BOOKING_LIMIT_REACHED } }
+        expect: { status: 409, body: { code: BOOKING_LIMIT_REACHED } }
 
   - id: AC-006
     title: Cancelling 24h+ ahead succeeds, frees the slot, and is idempotent
