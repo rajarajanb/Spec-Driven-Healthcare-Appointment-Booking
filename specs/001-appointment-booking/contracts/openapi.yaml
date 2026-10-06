@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: Provider Appointment Booking API
+  version: 1.0.0
+  description: |
+    Contract for spec 001. This file is written and reviewed BEFORE code.
+    The implementation is tested against it; it is never generated from the implementation.
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+
+  /providers/{providerId}/slots:
+    get:
+      operationId: listOpenSlots
+      summary: List open, future slots for a provider on a date (AC-008)
+      parameters:
+        - { name: providerId, in: path, required: true, schema: { type: string } }
+        - { name: date, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        "200":
+          description: Open slots ordered by start time
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SlotList" }
+        "404":
+          description: Provider not found (AC-010)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: Validation error (AC-009)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /appointments:
+    post:
+      operationId: bookAppointment
+      summary: Book a slot (AC-001..AC-005, AC-009)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BookingRequest" }
+      responses:
+        "201":
+          description: Booked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Appointment" }
+        "404":
+          description: Slot not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Slot unavailable or booking limit reached
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: Slot in the past, or validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /appointments/{appointmentId}:
+    get:
+      operationId: getAppointment
+      parameters:
+        - { name: appointmentId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The appointment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Appointment" }
+        "404":
+          description: Appointment not found (AC-010)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /appointments/{appointmentId}/cancel:
+    post:
+      operationId: cancelAppointment
+      summary: Cancel a booking (AC-006, AC-007)
+      parameters:
+        - { name: appointmentId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Appointment" }
+        "404":
+          description: Appointment not found (AC-010)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Cancellation window closed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, const: ok }
+
+    Slot:
+      type: object
+      additionalProperties: false
+      required: [id, providerId, start, end]
+      properties:
+        id: { type: string, examples: ["PR-001-D1-0930"] }
+        providerId: { type: string }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+
+    SlotList:
+      type: object
+      additionalProperties: false
+      required: [providerId, date, slots]
+      properties:
+        providerId: { type: string }
+        date: { type: string, format: date }
+        slots:
+          type: array
+          items: { $ref: "#/components/schemas/Slot" }
+
+    BookingRequest:
+      type: object
+      additionalProperties: false
+      required: [patientId, slotId]
+      properties:
+        patientId: { type: string, pattern: "^P-[0-9]{3,}$", examples: ["P-100"] }
+        slotId: { type: string, minLength: 1 }
+
+    Appointment:
+      type: object
+      additionalProperties: false
+      required: [id, patientId, providerId, slotId, start, status]
+      properties:
+        id: { type: string }
+        patientId: { type: string }
+        providerId: { type: string }
+        slotId: { type: string }
+        start: { type: string, format: date-time }
+        status: { type: string, enum: [BOOKED, CANCELLED] }
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - SLOT_UNAVAILABLE
+            - SLOT_IN_PAST
+            - SLOT_NOT_FOUND
+            - BOOKING_LIMIT_REACHED
+            - CANCELLATION_WINDOW_CLOSED
+            - APPOINTMENT_NOT_FOUND
+            - PROVIDER_NOT_FOUND
+            - VALIDATION_ERROR
+        message: { type: string }

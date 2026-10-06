@@ -1,0 +1,18 @@
+flowchart LR
+    subgraph CF["Code-first: the code is the truth"]
+        direction TB
+        A1["Idea in a<br/>meeting or ticket"] --> A2["Write code"]
+        A2 --> A3["Write tests<br/>that match the code"]
+        A3 --> A4["Generate docs<br/>from the code"]
+        A4 --> A5["Behaviour drifts,<br/>nobody notices"]
+    end
+    subgraph SF["Spec-first: the spec is the truth"]
+        direction TB
+        B1["Idea"] --> B2["Write spec<br/>+ acceptance criteria"]
+        B2 --> B3["Write contract<br/>openapi.yaml"]
+        B3 --> B4["Implement<br/>human or AI agent"]
+        B4 --> B5{"Gates pass?"}
+        B5 -- "no" --> B4
+        B5 -- "yes" --> B6["Merge"]
+    end
+    CF ~~~ SF

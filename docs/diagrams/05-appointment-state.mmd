@@ -1,0 +1,6 @@
+stateDiagram-v2
+    direction LR
+    [*] --> BOOKED: book<br/>BR-1, BR-2, BR-3 pass
+    BOOKED --> CANCELLED: cancel ≥ 24h ahead<br/>BR-4 · slot freed BR-5
+    BOOKED --> BOOKED: cancel < 24h<br/>409 AC-007
+    CANCELLED --> CANCELLED: cancel again<br/>200 idempotent BR-6

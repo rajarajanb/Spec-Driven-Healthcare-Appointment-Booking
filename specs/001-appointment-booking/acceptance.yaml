@@ -1,0 +1,107 @@
+# Executable acceptance criteria for spec 001.
+# Each scenario runs against a FRESH app whose clock is frozen at `clock`.
+# Every response is also validated against contracts/openapi.yaml (NFR-1).
+#
+# Step format:
+#   request: { method, path, body? }        path may use {saved_name}
+#   expect:
+#     status: <int>                          must also be documented in openapi.yaml
+#     body:   { field: value }               subset match on the JSON body
+#     list:   { field, key, includes?, excludes?, equals? }
+#   save:    { name: field }                 remember body[field] for later steps
+
+feature: Provider appointment booking
+clock: "2026-10-01T09:00:00Z"   # D0 = 2026-10-01, D1 = 2026-10-02, D2 = 2026-10-03
+
+scenarios:
+  - id: AC-001
+    title: Patient books an open future slot and it disappears from the list
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-100, slotId: PR-001-D1-0930 } }
+        expect: { status: 201, body: { status: BOOKED, slotId: PR-001-D1-0930, providerId: PR-001 } }
+      - request: { method: GET, path: "/providers/PR-001/slots?date=2026-10-02" }
+        expect: { status: 200, list: { field: slots, key: id, excludes: [PR-001-D1-0930] } }
+
+  - id: AC-002
+    title: A booked slot cannot be booked again
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-100, slotId: PR-001-D1-1100 } }
+        expect: { status: 201 }
+      - request: { method: POST, path: /appointments, body: { patientId: P-101, slotId: PR-001-D1-1100 } }
+        expect: { status: 409, body: { code: SLOT_UNAVAILABLE } }
+
+  - id: AC-003
+    title: A slot that has already started cannot be booked
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-100, slotId: PR-001-D0-0800 } }
+        expect: { status: 422, body: { code: SLOT_IN_PAST } }
+
+  - id: AC-004
+    title: Booking an unknown slot returns 404
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-100, slotId: PR-999-D1-0930 } }
+        expect: { status: 404, body: { code: SLOT_NOT_FOUND } }
+
+  - id: AC-005
+    title: A patient cannot hold more than 5 active upcoming appointments
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-0930 } }
+        expect: { status: 201 }
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1100 } }
+        expect: { status: 201 }
+      - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1400 } }
+        expect: { status: 201 }
+     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D1-1600 } }
+       expect: { status: 201 }
+     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-0930 } }
+       expect: { status: 201 }
+     - request: { method: POST, path: /appointments, body: { patientId: P-200, slotId: PR-002-D2-1100 } }
+       expect: { status: 409, body: { code: BOOKING_LIMIT_REACHED } }
+
+  - id: AC-006
+    title: Cancelling 24h+ ahead succeeds, frees the slot, and is idempotent
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-300, slotId: PR-001-D2-0930 } }
+        expect: { status: 201 }
+        save: { apptId: id }
+      - request: { method: POST, path: "/appointments/{apptId}/cancel" }
+        expect: { status: 200, body: { status: CANCELLED } }
+      - request: { method: GET, path: "/providers/PR-001/slots?date=2026-10-03" }
+        expect: { status: 200, list: { field: slots, key: id, includes: [PR-001-D2-0930] } }
+      - request: { method: POST, path: "/appointments/{apptId}/cancel" }
+        expect: { status: 200, body: { status: CANCELLED } }
+
+  - id: AC-007
+    title: Cancelling less than 24h ahead is rejected
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: P-301, slotId: PR-001-D1-0800 } }
+        expect: { status: 201 }
+        save: { apptId: id }
+      - request: { method: POST, path: "/appointments/{apptId}/cancel" }
+        expect: { status: 409, body: { code: CANCELLATION_WINDOW_CLOSED } }
+
+  - id: AC-008
+    title: Listing returns only open future slots, ordered by start time
+    steps:
+      - request: { method: GET, path: "/providers/PR-002/slots?date=2026-10-01" }
+        expect:
+          status: 200
+          list: { field: slots, key: id, equals: [PR-002-D0-0930, PR-002-D0-1100, PR-002-D0-1400, PR-002-D0-1600] }
+
+  - id: AC-009
+    title: Malformed requests return the standard error envelope
+    steps:
+      - request: { method: POST, path: /appointments, body: { patientId: bob, slotId: PR-001-D1-0930 } }
+        expect: { status: 422, body: { code: VALIDATION_ERROR } }
+      - request: { method: GET, path: /providers/PR-001/slots }
+        expect: { status: 422, body: { code: VALIDATION_ERROR } }
+
+  - id: AC-010
+    title: Unknown appointment or provider returns 404
+    steps:
+      - request: { method: GET, path: /appointments/APT-unknown }
+        expect: { status: 404, body: { code: APPOINTMENT_NOT_FOUND } }
+      - request: { method: POST, path: /appointments/APT-unknown/cancel }
+        expect: { status: 404, body: { code: APPOINTMENT_NOT_FOUND } }
+      - request: { method: GET, path: "/providers/PR-999/slots?date=2026-10-02" }
+        expect: { status: 404, body: { code: PROVIDER_NOT_FOUND } }

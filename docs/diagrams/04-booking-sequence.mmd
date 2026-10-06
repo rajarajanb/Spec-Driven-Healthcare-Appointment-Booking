@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Patient
+    participant API as api.py
+    participant Svc as BookingService
+    participant Repo as Repository
+    participant Clock
+    Patient->>API: POST /appointments {patientId, slotId}
+    API->>API: validate body against contract
+    alt malformed body
+        API-->>Patient: 422 VALIDATION_ERROR  (AC-009)
+    end
+    API->>Svc: book(patientId, slotId)
+    Svc->>Repo: get slot
+    alt slot missing
+        Svc-->>API: SLOT_NOT_FOUND
+        API-->>Patient: 404  (AC-004)
+    end
+    Svc->>Clock: now()
+    alt slot already started (BR-2)
+        API-->>Patient: 422 SLOT_IN_PAST  (AC-003)
+    else slot taken (BR-1)
+        API-->>Patient: 409 SLOT_UNAVAILABLE  (AC-002)
+    else patient has 3 upcoming (BR-3)
+        API-->>Patient: 409 BOOKING_LIMIT_REACHED  (AC-005)
+    else all rules pass
+        Svc->>Repo: save appointment BOOKED
+        API-->>Patient: 201 Appointment  (AC-001)
+    end

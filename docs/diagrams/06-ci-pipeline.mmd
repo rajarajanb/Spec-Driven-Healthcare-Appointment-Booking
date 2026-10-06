@@ -1,0 +1,9 @@
+flowchart LR
+    PR(["Pull request"]) --> C["Checkout +<br/>install"]
+    C --> T["pytest<br/>Gates 1-3"]
+    T -- "pass" --> TR["Traceability<br/>Gate 4"]
+    TR -- "pass" --> DD["Drift demo<br/>gates still bite?"]
+    DD -- "pass" --> OK(["Mergeable"])
+    T -- "fail" --> X(["Blocked:<br/>code ≠ spec"])
+    TR -- "fail" --> Y(["Blocked:<br/>untested AC"])
+    DD -- "fail" --> Z(["Blocked:<br/>gates too weak"])

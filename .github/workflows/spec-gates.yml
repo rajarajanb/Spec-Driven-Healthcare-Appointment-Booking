@@ -1,0 +1,26 @@
+name: spec-gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: "Gate 1-3: contract, acceptance and rule tests"
+        run: python -m pytest -v
+
+      - name: "Gate 4: traceability (every AC in spec.md is covered)"
+        run: python tools/check_traceability.py
+
+      - name: "Proof: the gates catch deliberate drift"
+        run: python tools/drift_demo.py

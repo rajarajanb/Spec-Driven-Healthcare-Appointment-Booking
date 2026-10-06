@@ -1,0 +1,11 @@
+flowchart TD
+    I(["Intent<br/>'patients should book without calling'"]) --> S
+    S["1 · Specify<br/>spec.md<br/>user stories · business rules · AC-xxx"] --> P
+    P["2 · Plan<br/>plan.md + openapi.yaml<br/>stack · architecture · contract"] --> T
+    T["3 · Tasks<br/>tasks.md<br/>small units, each mapped to ACs"] --> M
+    M["4 · Implement<br/>developer or AI coding agent<br/>reads AGENTS.md"] --> V
+    V{"5 · Verify<br/>contract · acceptance ·<br/>rules · traceability"}
+    V -- "fail: code is wrong" --> M
+    V -- "fail: spec gap found" --> S
+    V -- "pass" --> D(["Merge and deploy"])
+    D -. "new requirement" .-> S

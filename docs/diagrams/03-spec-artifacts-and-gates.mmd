@@ -1,0 +1,27 @@
+flowchart TB
+    subgraph SPEC["① The spec — written first, reviewed like code"]
+        direction LR
+        SM["spec.md<br/>stories · rules · AC-001…AC-010"]
+        OA["contracts/openapi.yaml<br/>paths · schemas · error codes"]
+        AY["acceptance.yaml<br/>executable Given / When / Then"]
+    end
+    subgraph GATES["② The gates — run on every commit"]
+        direction LR
+        G1["Gate 1 · Contract<br/>no missing or extra endpoints"]
+        G2["Gate 2 · Behaviour<br/>every scenario + schema check"]
+        G3["Gate 3 · Rules<br/>boundary unit tests"]
+        G4["Gate 4 · Traceability<br/>every AC has a test"]
+    end
+    subgraph CODE["③ The code — an output of the spec"]
+        direction LR
+        API["api.py<br/>HTTP + error envelope"]
+        DOM["domain.py<br/>BR-1…BR-6"]
+    end
+    OA --> G1
+    OA --> G2
+    AY --> G2
+    SM --> G4
+    AY --> G4
+    G1 -- "verifies" --> API
+    G2 -- "verifies" --> API
+    G3 -- "verifies" --> DOM
